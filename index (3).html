@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>修辭與複句測驗｜國小高年級</title>
+
+<!-- ══════════════════════════════════════════════════
+  ★ 老師請注意：部署前請先完成以下兩個步驟
+  ──────────────────────────────────────────────────
+  步驟一：建立 Firebase 專案並取得設定碼
+    1. 前往 https://console.firebase.google.com
+    2. 建立新專案 → 新增 Web 應用程式
+    3. 前往「Realtime Database」→ 建立資料庫（測試模式）
+    4. 將下方 firebaseConfig 中的所有 YOUR_XXX 替換為您的值
+
+  步驟二：GitHub Pages 部署
+    1. 將此檔案上傳至 GitHub 儲存庫
+    2. Settings → Pages → Branch: main → 儲存
+    3. 取得網址後，QR Code 會自動更新
+══════════════════════════════════════════════════ -->
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, push, get, child, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  /* ── ① 請將以下內容替換為您的 Firebase 設定 ── */
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAFh8Dmf25j1D9rCpBpCpcxKLVBNsAF4m4",
+    authDomain:        "chinese-50d0c.firebaseapp.com",
+    databaseURL:       "https://chinese-50d0c-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "chinese-50d0c",
+    storageBucket:     "chinese-50d0c.firebasestorage.app",
+    messagingSenderId: "1044608618028",
+    appId:             "1:1044608618028:web:d95f2811e0dd61bbe30b89"
+  };
+  /* ── ② 以上替換完畢後存檔並上傳至 GitHub ── */
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  window._fbSave = async (record) => {
+    try {
+      await push(ref(db, "quiz_records"), record);
+      return true;
+    } catch(e) {
+      console.warn("Firebase 儲存失敗，改用 localStorage", e);
+      localStorage.setItem("qr_" + Date.now(), JSON.stringify(record));
+      return false;
+    }
+  };
+
+  window._fbLoad = async () => {
+    try {
+      const snap = await get(child(ref(db), "quiz_records"));
+      if (!snap.exists()) return [];
+      const val = snap.val();
+      return Object.entries(val)
+        .map(([k, v]) => ({ key: k, ...v }))
+        .sort((a, b) => b.key.localeCompare(a.key));
+    } catch(e) {
+      console.warn("Firebase 讀取失敗，改用 localStorage", e);
+      return _localLoad();
+    }
+  };
+
+  window._fbClear = async () => {
+    try {
+      await remove(ref(db, "quiz_records"));
+    } catch(e) {
+      _localClear();
+    }
+  };
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#FDF6F2;color:#2C2018;min-height:100vh}
+:root{
+  --main:#D95B2A;--main-d:#A8411A;--main-l:#FAEDE6;
+  --teal:#1A8C74;--teal-l:#E0F5F0;--teal-d:#0F6056;
+  --amber:#C47B0A;--amber-l:#FEF5DC;
+  --red-l:#FCEAEA;--red:#B83232;
+  --gray:#F4F0EC;--gray2:#E8E2DB;
+  --text:#2C2018;--text2:#7A6A5A;--text3:#AFA090;
+  --white:#FFFFFF;--border:#E0D6CC;
+  --rad:12px;--rad-sm:8px;
+}
+#app{max-width:680px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.screen{display:none}.screen.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+h1{font-size:24px;font-weight:700;color:var(--text);line-height:1.3}
+h2{font-size:20px;font-weight:700;color:var(--text);margin-bottom:14px}
+h3{font-size:16px;font-weight:700;color:var(--text)}
+p{line-height:1.7;color:var(--text2)}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--rad);padding:1.5rem;margin-bottom:1rem}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;border-radius:var(--rad-sm);border:1.5px solid transparent;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--main);border-color:var(--main-d);color:#fff}.btn-primary:hover{background:var(--main-d)}
+.btn-teal{background:var(--teal);border-color:var(--teal-d);color:#fff}.btn-teal:hover{background:var(--teal-d)}
+.btn-ghost{background:transparent;border-color:var(--border);color:var(--text)}.btn-ghost:hover{background:var(--gray)}
+.btn-danger{background:transparent;border-color:#F09595;color:var(--red);font-size:13px;padding:8px 14px}.btn-danger:hover{background:var(--red-l)}
+.btn-sm{padding:8px 15px;font-size:13px}.btn-block{width:100%;justify-content:center}
+.tag{display:inline-block;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:500}
+.tag-rhetoric{background:#FAEDE6;color:#993C1D}.tag-sentence{background:var(--teal-l);color:var(--teal-d)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.badge-green{background:var(--teal-l);color:var(--teal-d)}.badge-amber{background:var(--amber-l);color:#7A4F0A}.badge-red{background:var(--red-l);color:var(--red)}
+.logo-bar{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo-icon{width:44px;height:44px;background:var(--main);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{width:24px;height:24px;fill:#fff}
+.subtitle{font-size:14px;color:var(--text2);margin-bottom:1.75rem}
+.qr-box{display:flex;flex-direction:column;align-items:center;gap:10px;padding:1.5rem;background:var(--gray);border-radius:var(--rad);margin-bottom:.75rem}
+.qr-box img{border-radius:10px;border:4px solid var(--white);box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.qr-hint{font-size:13px;color:var(--text2);text-align:center;line-height:1.6}
+.or-divider{text-align:center;font-size:13px;color:var(--text3);margin:.5rem 0}
+.cta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem}
+.scope-grid{display:flex;flex-wrap:wrap;gap:7px;margin-top:.75rem}
+.prog-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
+.prog-bar{height:7px;background:var(--gray2);border-radius:4px;margin-bottom:1.25rem;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--main),#F07030);border-radius:4px;transition:width .4s ease}
+.q-text{font-size:16px;line-height:1.9;color:var(--text);background:var(--gray);padding:15px 16px;border-radius:var(--rad-sm);border-left:4px solid var(--main);margin-bottom:1.25rem}
+.opts{display:grid;gap:10px}
+.opt{display:flex;align-items:flex-start;gap:13px;padding:13px 15px;border:1.5px solid var(--border);border-radius:var(--rad-sm);cursor:pointer;transition:all .15s;background:var(--white);user-select:none}
+.opt:hover{border-color:var(--main);background:var(--main-l)}
+.opt.correct{border-color:var(--teal);background:var(--teal-l);cursor:default}
+.opt.wrong{border-color:var(--red);background:var(--red-l);cursor:default}
+.opt.neutral{cursor:default}
+.opt-label{font-size:14px;font-weight:700;color:var(--main);min-width:20px;line-height:1.5}
+.opt.correct .opt-label{color:var(--teal-d)}.opt.wrong .opt-label{color:var(--red)}
+.opt-text{font-size:15px;color:var(--text);line-height:1.6}
+.feedback{margin-top:1rem;padding:12px 15px;border-radius:var(--rad-sm);font-size:14px;line-height:1.7}
+.feedback.ok{background:var(--teal-l);color:var(--teal-d);border-left:4px solid var(--teal)}
+.feedback.err{background:var(--red-l);color:var(--red);border-left:4px solid var(--red)}
+.next-row{margin-top:1.25rem;text-align:right}
+.score-hero{display:flex;flex-direction:column;align-items:center;padding:1.5rem 1rem;text-align:center}
+.ring-wrap{position:relative;width:110px;height:110px;margin-bottom:1rem}
+.ring-wrap svg{width:110px;height:110px}
+.ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-num{font-size:30px;font-weight:700;color:var(--main)}.ring-den{font-size:13px;color:var(--text2)}
+.score-msg{font-size:16px;font-weight:500;color:var(--text);margin-top:.5rem}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:1rem 0}
+.stat-card{background:var(--gray);border-radius:var(--rad-sm);padding:1rem;text-align:center}
+.stat-num{font-size:22px;font-weight:700;color:var(--text)}.stat-lbl{font-size:12px;color:var(--text2);margin-top:3px}
+.result-list{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:1rem}
+.ritem{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--rad-sm);font-size:13px}
+.ritem.ok{background:var(--teal-l);color:var(--teal-d)}.ritem.fail{background:var(--red-l);color:var(--red)}
+.weak-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.weak-item:last-child{border-bottom:none}
+.hist-item{padding:12px 14px;border:1px solid var(--border);border-radius:var(--rad-sm);margin-bottom:8px;cursor:pointer;transition:background .15s}
+.hist-item:hover{background:var(--gray)}
+.hist-name{font-size:15px;font-weight:500}.hist-meta{font-size:12px;color:var(--text2);margin-top:4px}
+.detail-panel{background:var(--gray);border-radius:var(--rad-sm);padding:10px 12px;margin-top:10px;font-size:13px;line-height:2.2}
+.empty{font-size:14px;color:var(--text2);padding:1rem 0}
+.top-bar{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+input[type=text],input[type=password]{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--rad-sm);font-size:15px;color:var(--text);background:var(--white);font-family:inherit;margin-bottom:10px;transition:border-color .15s}
+input:focus{outline:none;border-color:var(--main)}
+.saving-toast{position:fixed;bottom:24px;right:24px;background:var(--teal);color:#fff;padding:10px 18px;border-radius:var(--rad-sm);font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.saving-toast.show{opacity:1}
+.cloud-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--teal-l);color:var(--teal-d);margin-left:8px;vertical-align:middle}
+@media(max-width:480px){.cta-grid,.result-list{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════ HOME ════ -->
+<div id="home" class="screen active">
+  <div class="logo-bar">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+    </div>
+    <div>
+      <h1>修辭與複句測驗</h1>
+      <span class="cloud-badge">☁ 雲端儲存</span>
+    </div>
+  </div>
+  <p class="subtitle">國小高年級｜共 20 題選擇題｜作答記錄自動同步雲端</p>
+  <div class="card">
+    <div class="qr-box">
+      <img id="qrImg" src="" alt="QR Code" width="180" height="180"/>
+      <p class="qr-hint">📱 請用平板或手機掃描 QR Code 進行作答<br>或點選下方按鈕直接開始</p>
+    </div>
+    <div class="or-divider">— 或 —</div>
+    <div class="cta-grid">
+      <button class="btn btn-primary btn-block" onclick="goStudent()">✏️ &nbsp;開始作答</button>
+      <button class="btn btn-ghost btn-block" onclick="goTeacher()">📊 &nbsp;教師查閱</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:10px">📖 測驗範圍</h3>
+    <p style="font-size:13px;margin-bottom:10px">修辭（10題）</p>
+    <div class="scope-grid" style="margin-bottom:14px">
+      <span class="tag tag-rhetoric">比喻</span><span class="tag tag-rhetoric">擬人</span>
+      <span class="tag tag-rhetoric">誇張</span><span class="tag tag-rhetoric">排比</span>
+      <span class="tag tag-rhetoric">反問</span><span class="tag tag-rhetoric">設問</span>
+      <span class="tag tag-rhetoric">借代</span><span class="tag tag-rhetoric">對偶</span>
+    </div>
+    <p style="font-size:13px;margin-bottom:10px">複句結構（10題）</p>
+    <div class="scope-grid">
+      <span class="tag tag-sentence">因果複句</span><span class="tag tag-sentence">轉折複句</span>
+      <span class="tag tag-sentence">假設複句</span><span class="tag tag-sentence">遞進複句</span>
+      <span class="tag tag-sentence">選擇複句</span><span class="tag tag-sentence">並列複句</span>
+      <span class="tag tag-sentence">條件複句</span><span class="tag tag-sentence">目的複句</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ NAME ════ -->
+<div id="nameScreen" class="screen">
+  <div class="top-bar"><button class="btn btn-ghost btn-sm" onclick="show('home')">← 返回</button></div>
+  <h2>請輸入姓名</h2>
+  <p style="margin-bottom:1.25rem;font-size:14px">您的作答記錄將儲存至雲端，供老師進行補救教學參考。</p>
+  <div class="card" style="max-width:360px">
+    <input type="text" id="studentName" placeholder="請輸入姓名…" maxlength="20" onkeydown="if(event.key==='Enter')startQuiz()"/>
+    <button class="btn btn-primary btn-block" onclick="startQuiz()">✏️ &nbsp;開始測驗</button>
+  </div>
+</div>
+
+<!-- ════ QUIZ ════ -->
+<div id="quizScreen" class="screen">
+  <div class="prog-header">
+    <span id="qNum" style="font-size:14px;color:var(--text2)"></span>
+    <span id="qCat" class="tag"></span>
+  </div>
+  <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+  <div class="card">
+    <div id="qText" class="q-text"></div>
+    <div class="opts" id="optsList"></div>
+    <div id="feedbackDiv"></div>
+    <div class="next-row">
+      <button class="btn btn-primary" id="nextBtn" onclick="nextQ()" style="display:none">下一題 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ RESULT ════ -->
+<div id="resultScreen" class="screen">
+  <h2>🎉 測驗完成！</h2>
+  <div class="card">
+    <div class="score-hero">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="#E8E2DB" stroke-width="9"/>
+          <circle cx="55" cy="55" r="46" fill="none" stroke="#D95B2A" stroke-width="9"
+            stroke-dasharray="289" id="ringCircle" stroke-dashoffset="289"
+            stroke-linecap="round" transform="rotate(-90 55 55)" style="transition:stroke-dashoffset 1.2s ease"/>
+        </svg>
+        <div class="ring-inner">
+          <span class="ring-num" id="scoreNum">0</span>
+          <span class="ring-den">/ 20</span>
+        </div>
+      </div>
+      <p class="score-msg" id="scoreMsg"></p>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="stat-num" id="rStat"></div><div class="stat-lbl">修辭答對</div></div>
+      <div class="stat-card"><div class="stat-num" id="sStat"></div><div class="stat-lbl">複句答對</div></div>
+      <div class="stat-card"><div class="stat-num" id="timeStat"></div><div class="stat-lbl">答題秒數</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3 style="margin-bottom:12px">各題作答狀況</h3>
+    <div class="result-list" id="resultList"></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn btn-primary" onclick="retake()">🔄 &nbsp;重新作答</button>
+    <button class="btn btn-ghost" onclick="show('home')">🏠 &nbsp;返回首頁</button>
+  </div>
+</div>
+
+<!-- ════ TEACHER ════ -->
+<div id="teacherScreen" class="screen">
+  <div class="top-bar"><button class="btn btn-ghost btn-sm" onclick="show('home')">← 返回</button><h2 style="margin:0">教師查閱介面</h2></div>
+  <div id="teacherLogin" class="card" style="max-width:360px">
+    <p style="font-size:14px;margin-bottom:12px">請輸入教師密碼以查閱作答歷程</p>
+    <input type="password" id="tPwd" placeholder="教師密碼（預設：teacher123）" onkeydown="if(event.key==='Enter')verifyTeacher()"/>
+    <button class="btn btn-teal btn-block" onclick="verifyTeacher()">🔓 &nbsp;進入查閱</button>
+  </div>
+  <div id="teacherBoard" style="display:none">
+    <div id="loadingMsg" style="padding:1rem;font-size:14px;color:var(--text2)">⏳ 載入雲端資料中…</div>
+    <div id="boardContent" style="display:none">
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-num" id="tTotal">0</div><div class="stat-lbl">作答人數</div></div>
+        <div class="stat-card"><div class="stat-num" id="tAvg">-</div><div class="stat-lbl">平均分數</div></div>
+        <div class="stat-card"><div class="stat-num" id="tWorst">-</div><div class="stat-lbl">最低答對率題</div></div>
+      </div>
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="margin-bottom:12px">🔍 補救教學建議</h3>
+        <div id="weakList"></div>
+      </div>
+      <h3 style="margin-bottom:10px">學生作答清單</h3>
+      <div id="histList"></div>
+      <div style="margin-top:1.25rem">
+        <button class="btn btn-danger" onclick="clearAll()">🗑 清除全部紀錄</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<div class="saving-toast" id="toast"></div>
+
+<script>
+/* ════════ QUESTIONS ════════ */
+const QS=[
+  {q:'「她的笑容像春天的陽光，溫暖又燦爛。」這句話使用了哪種修辭？',opts:['擬人','誇張','比喻','排比'],ans:2,type:'rhetoric',exp:'這句話用「像」把笑容比作春天的陽光，屬於明喻，是比喻修辭的一種。'},
+  {q:'「小草搖頭晃腦，好像在和風說悄悄話。」這句話使用了哪種修辭？',opts:['借代','擬人','比喻','反問'],ans:1,type:'rhetoric',exp:'把小草寫成像人一樣「搖頭晃腦」、「說話」，賦予事物人的動作與神態，是擬人修辭。'},
+  {q:'「這個西瓜甜到可以甜死人！」這句話使用了哪種修辭？',opts:['誇張','映襯','排比','層遞'],ans:0,type:'rhetoric',exp:'用「甜死人」誇大描述西瓜的甜度，超出現實可能，是誇張修辭。'},
+  {q:'「他的功課多如牛毛，永遠寫不完。」「多如牛毛」是比喻什麼？',opts:['牛身上的毛很多','功課非常多','頭髮很長','書包很重'],ans:1,type:'rhetoric',exp:'「多如牛毛」借牛毛數量龐大，比喻功課的數量非常多，是比喻（明喻）修辭。'},
+  {q:'下面哪一句是「排比」修辭？',opts:['他跑得比閃電還快。','清晨，鳥兒在唱歌。','春有百花，夏有涼風，秋有明月，冬有暖陽。','難道他不知道嗎？'],ans:2,type:'rhetoric',exp:'排比是連用三個以上結構相似的句子。「春有……夏有……秋有……冬有……」四個季節描述結構相同，是排比修辭。'},
+  {q:'「難道這樣做是對的嗎？」這句話使用了哪種修辭？',opts:['設問','反問','擬人','借代'],ans:1,type:'rhetoric',exp:'這句明知故問，答案暗含在問句中（不對），不需要回答，是反問修辭。設問是自問自答，兩者不同。'},
+  {q:'「誰是世界上最勤勞的人？是農夫。」這句話使用了哪種修辭？',opts:['反問','誇張','設問','排比'],ans:2,type:'rhetoric',exp:'自問自答，先提出問題再給出答案，是設問修辭。反問只問不答，設問則有問有答。'},
+  {q:'「知識就是力量。」這句話用了哪種修辭？',opts:['擬人','借代','比喻（暗喻）','誇張'],ans:2,type:'rhetoric',exp:'用「就是」直接把知識等同於力量，不用「像」等比喻詞，稱為暗喻，屬於比喻修辭。'},
+  {q:'「春蠶到死絲方盡，蠟炬成灰淚始乾。」這兩句使用了哪種修辭？',opts:['排比','比喻','對偶','誇張'],ans:2,type:'rhetoric',exp:'上下兩句字數相同、詞性相對、意義相關，結構整齊對稱，是對偶修辭（又稱對仗）。'},
+  {q:'「他跑得比火箭還快。」這句話同時使用了哪兩種修辭？',opts:['排比和擬人','比喻和誇張','設問和比喻','借代和排比'],ans:1,type:'rhetoric',exp:'「比火箭還快」將人的速度比喻成火箭（比喻），同時人不可能跑贏火箭，是誇張說法，兩種修辭並用。'},
+  {q:'「因為今天下雨，所以我帶了雨傘。」這是什麼複句？',opts:['假設複句','轉折複句','因果複句','並列複句'],ans:2,type:'sentence',exp:'用「因為……所以……」說明原因與結果的關係，是因果複句。'},
+  {q:'「雖然他很累，但是他還是堅持完成了作業。」這是什麼複句？',opts:['遞進複句','轉折複句','選擇複句','因果複句'],ans:1,type:'sentence',exp:'用「雖然……但是……」表示前後意思相對或相反，是轉折複句。'},
+  {q:'「你可以選擇走路去，也可以選擇搭公車。」這是什麼複句？',opts:['並列複句','假設複句','選擇複句','條件複句'],ans:2,type:'sentence',exp:'提供兩種可能方式供選擇，用「可以……也可以……」連接，是選擇複句。'},
+  {q:'「如果明天放晴，我們就去爬山。」這是什麼複句？',opts:['因果複句','假設複句','目的複句','遞進複句'],ans:1,type:'sentence',exp:'用「如果……就……」表示在假設某條件成立的情況下，是假設複句。'},
+  {q:'「他不但學習認真，而且品德良好。」這是什麼複句？',opts:['並列複句','選擇複句','遞進複句','轉折複句'],ans:2,type:'sentence',exp:'用「不但……而且……」在前者基礎上更進一步，意思逐漸深入加強，是遞進複句。'},
+  {q:'「他努力讀書，是為了能考上好學校。」這是什麼複句？',opts:['因果複句','目的複句','假設複句','條件複句'],ans:1,type:'sentence',exp:'後句說明前句行為的目的，「是為了……」是目的複句的標誌。'},
+  {q:'「天空湛藍，陽光普照，微風輕拂。」這是什麼複句？',opts:['遞進複句','並列複句','選擇複句','轉折複句'],ans:1,type:'sentence',exp:'三個分句並排描述，互相平等、無主從關係，是並列複句。'},
+  {q:'「只要你願意努力，就一定能成功。」這是什麼複句？',opts:['假設複句','因果複句','條件複句','目的複句'],ans:2,type:'sentence',exp:'用「只要……就……」說明達成結果必須滿足的條件，是條件複句（充分條件）。'},
+  {q:'下列哪一句是「假設複句」？',opts:['因為下雨，所以他沒出門。','他不但努力，而且聰明。','要是你早點說，我就來幫你。','雖然天冷，但他仍去上學。'],ans:2,type:'sentence',exp:'「要是……就……」是假設複句的典型句式，表示假設某條件成立時的結果。選項A是因果，B是遞進，D是轉折。'},
+  {q:'「他說話輕聲細語，走路輕手輕腳，做事謹慎認真。」這段話使用了哪種修辭？',opts:['借代','排比','反問','誇張'],ans:1,type:'rhetoric',exp:'三個句子結構相似（說話、走路、做事各一句）並列呈現，是排比修辭。'},
+];
+
+/* ════════ STATE ════════ */
+let cur=0,answers=[],startTs=0,sName='';
+
+/* ════════ HELPERS ════════ */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toast(msg,color='var(--teal)'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=color;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+/* ════════ LOCAL FALLBACK ════════ */
+function _localLoad(){
+  const r=[];
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('qr_'))try{r.push({key:k,...JSON.parse(localStorage.getItem(k))});}catch(e){}
+  }
+  return r.sort((a,b)=>b.key.localeCompare(a.key));
+}
+function _localClear(){
+  const ks=[];
+  for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith('qr_'))ks.push(k);}
+  ks.forEach(k=>localStorage.removeItem(k));
+}
+
+/* ════════ NAV ════════ */
+function goStudent(){show('nameScreen');setTimeout(()=>document.getElementById('studentName').focus(),200);}
+function goTeacher(){show('teacherScreen');}
+
+/* ════════ QUIZ ════════ */
+function startQuiz(){
+  sName=document.getElementById('studentName').value.trim();
+  if(!sName){alert('請輸入姓名！');return;}
+  cur=0;answers=[];startTs=Date.now();
+  show('quizScreen');renderQ();
+}
+function renderQ(){
+  const q=QS[cur];
+  document.getElementById('qNum').textContent=`第 ${cur+1} 題 / 共 ${QS.length} 題`;
+  const c=document.getElementById('qCat');
+  c.className='tag '+(q.type==='rhetoric'?'tag-rhetoric':'tag-sentence');
+  c.textContent=q.type==='rhetoric'?'修辭':'複句';
+  document.getElementById('progFill').style.width=`${(cur/QS.length)*100}%`;
+  document.getElementById('qText').textContent=q.q;
+  document.getElementById('feedbackDiv').innerHTML='';
+  document.getElementById('nextBtn').style.display='none';
+  const ol=document.getElementById('optsList');ol.innerHTML='';
+  ['A','B','C','D'].forEach((lbl,i)=>{
+    const d=document.createElement('div');d.className='opt';d.dataset.i=i;
+    d.innerHTML=`<span class="opt-label">${lbl}</span><span class="opt-text">${q.opts[i]}</span>`;
+    d.addEventListener('click',()=>pick(i));ol.appendChild(d);
+  });
+}
+function pick(idx){
+  const q=QS[cur];
+  document.querySelectorAll('.opt').forEach(o=>{
+    o.style.pointerEvents='none';const i=parseInt(o.dataset.i);
+    if(i===q.ans)o.classList.add('correct');
+    else if(i===idx&&idx!==q.ans)o.classList.add('wrong');
+    else o.classList.add('neutral');
+  });
+  const ok=idx===q.ans;
+  answers.push({q:cur,chosen:idx,correct:ok});
+  document.getElementById('feedbackDiv').innerHTML=
+    `<div class="feedback ${ok?'ok':'err'}"><strong>${ok?'✓ 答對了！':'✗ 答錯了。'}</strong> ${q.exp}</div>`;
+  const nb=document.getElementById('nextBtn');
+  nb.style.display='inline-flex';
+  nb.textContent=cur===QS.length-1?'查看結果 →':'下一題 →';
+}
+function nextQ(){cur++;if(cur>=QS.length){showResult();return;}renderQ();window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ════════ RESULT ════════ */
+async function showResult(){
+  show('resultScreen');
+  const elapsed=Math.round((Date.now()-startTs)/1000);
+  const score=answers.filter(a=>a.correct).length;
+  const rScore=answers.filter(a=>a.correct&&QS[a.q].type==='rhetoric').length;
+  const sScore=answers.filter(a=>a.correct&&QS[a.q].type==='sentence').length;
+  document.getElementById('scoreNum').textContent=score;
+  document.getElementById('rStat').textContent=rScore+'/10';
+  document.getElementById('sStat').textContent=sScore+'/10';
+  document.getElementById('timeStat').textContent=elapsed+'s';
+  const msgs=['加油！多複習修辭和複句喔！','有進步空間，繼續努力！','不錯喔！再接再厲！','很棒！再複習一下吧！','完美！太厲害了！'];
+  document.getElementById('scoreMsg').textContent=msgs[Math.min(4,Math.floor(score/4))];
+  setTimeout(()=>{document.getElementById('ringCircle').style.strokeDashoffset=`${289*(1-score/QS.length)}`;},300);
+  const rl=document.getElementById('resultList');rl.innerHTML='';
+  QS.forEach((q,i)=>{
+    const a=answers[i];const d=document.createElement('div');d.className='ritem '+(a.correct?'ok':'fail');
+    d.innerHTML=`<span>${a.correct?'✓':'✗'}</span><span>第${i+1}題${a.correct?'答對':'（正確：'+['A','B','C','D'][q.ans]+'）'}</span>`;
+    rl.appendChild(d);
+  });
+  const rec={name:sName,score,rScore,sScore,elapsed,time:new Date().toLocaleString('zh-TW'),answers:answers.map(a=>a.chosen)};
+  toast('⏳ 儲存中…','#888');
+  if(window._fbSave){
+    const ok=await window._fbSave(rec);
+    toast(ok?'☁ 已儲存至雲端':'💾 已儲存至本機',ok?'var(--teal)':'var(--amber)');
+  } else {
+    localStorage.setItem('qr_'+Date.now(),JSON.stringify(rec));
+    toast('💾 已儲存至本機','var(--amber)');
+  }
+}
+function retake(){show('nameScreen');}
+
+/* ════════ TEACHER ════════ */
+function verifyTeacher(){
+  if(document.getElementById('tPwd').value==='teacher123'){
+    document.getElementById('teacherLogin').style.display='none';
+    document.getElementById('teacherBoard').style.display='block';
+    loadBoard();
+  } else {alert('密碼錯誤！請輸入 teacher123');}
+}
+async function loadBoard(){
+  document.getElementById('loadingMsg').style.display='block';
+  document.getElementById('boardContent').style.display='none';
+  let recs=[];
+  if(window._fbLoad) recs=await window._fbLoad();
+  else recs=_localLoad();
+  document.getElementById('loadingMsg').style.display='none';
+  document.getElementById('boardContent').style.display='block';
+  document.getElementById('tTotal').textContent=recs.length;
+  if(recs.length===0){
+    document.getElementById('tAvg').textContent='-';document.getElementById('tWorst').textContent='-';
+    document.getElementById('weakList').innerHTML='<p class="empty">尚無作答紀錄。</p>';
+    document.getElementById('histList').innerHTML='<p class="empty">尚無學生完成作答。</p>';return;
+  }
+  document.getElementById('tAvg').textContent=(recs.reduce((s,r)=>s+r.score,0)/recs.length).toFixed(1)+'分';
+  const cnt=Array(20).fill(0),wrong=Array(20).fill(0);
+  recs.forEach(r=>{r.answers.forEach((a,i)=>{cnt[i]++;if(a!==QS[i].ans)wrong[i]++;});});
+  let wi=0,wr=0;cnt.forEach((c,i)=>{if(c>0&&wrong[i]/c>wr){wr=wrong[i]/c;wi=i;}});
+  document.getElementById('tWorst').textContent='第'+(wi+1)+'題';
+  const weak=QS.map((q,i)=>({i,rate:cnt[i]?wrong[i]/cnt[i]:0})).filter(x=>x.rate>0.4).sort((a,b)=>b.rate-a.rate);
+  const wl=document.getElementById('weakList');
+  wl.innerHTML=weak.length===0?'<p class="empty" style="color:var(--teal-d)">✓ 整體表現良好，暫無需特別補救的題目。</p>':
+    weak.map(w=>`<div class="weak-item">
+      <span class="badge ${w.rate>.6?'badge-red':'badge-amber'}">第${w.i+1}題｜錯誤率${Math.round(w.rate*100)}%</span>
+      <span style="font-size:13px;color:var(--text2)">${QS[w.i].q.slice(0,28)}…</span>
+      <span class="tag ${QS[w.i].type==='rhetoric'?'tag-rhetoric':'tag-sentence'}" style="flex-shrink:0">${QS[w.i].type==='rhetoric'?'修辭':'複句'}</span>
+    </div>`).join('');
+  const hl=document.getElementById('histList');hl.innerHTML='';
+  recs.forEach(r=>{
+    const pct=r.score/20;const bc=pct>=.8?'badge-green':pct>=.5?'badge-amber':'badge-red';
+    const d=document.createElement('div');d.className='hist-item';
+    d.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="hist-name">${r.name}</span><span class="badge ${bc}">${r.score}/20 分</span></div>
+      <div class="hist-meta">${r.time}｜修辭 ${r.rScore}/10｜複句 ${r.sScore}/10｜用時 ${r.elapsed} 秒</div>`;
+    d.addEventListener('click',()=>{
+      const ex=d.querySelector('.detail-panel');if(ex){ex.remove();return;}
+      const dp=document.createElement('div');dp.className='detail-panel';
+      dp.innerHTML=r.answers.map((a,i)=>`<span style="display:inline-block;width:72px">${a===QS[i].ans?'<span style="color:var(--teal-d)">✓</span>':'<span style="color:var(--red)">✗</span>'} 第${i+1}題</span>`).join('');
+      d.appendChild(dp);
+    });
+    hl.appendChild(d);
+  });
+}
+async function clearAll(){
+  if(!confirm('確定清除全部作答紀錄？此動作無法復原。'))return;
+  if(window._fbClear) await window._fbClear(); else _localClear();
+  loadBoard();
+}
+
+/* ════════ QR CODE ════════ */
+window.addEventListener('load',()=>{
+  const url=window.location.href;
+  const img=document.getElementById('qrImg');
+  img.src=`https://api.qrserver.com/v1/create-qr-code/?size=180x180&color=D95B2A&bgcolor=F4F0EC&data=${encodeURIComponent(url)}`;
+  img.onerror=()=>{img.style.display='none';};
+});
+</script>
+</body>
+</html>
